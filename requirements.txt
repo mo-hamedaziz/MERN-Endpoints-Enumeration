@@ -1,1 +1,4 @@
+os
+re
+argparse
 tqdm
