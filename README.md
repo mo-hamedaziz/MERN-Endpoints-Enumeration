@@ -8,6 +8,7 @@ This Python script is designed to enumerate and list all REST API endpoints defi
 - Supports automatic confirmation (`-y` or `--yes`) to bypass prompts.
 - Optionally exports enumerated routes to a text file.
 - Provides verbose output option (`-v` or `--verbose`) for detailed route information.
+- Export output as JSON (`--as-json`)
 
 ## Requirements
 - Python 3.x
