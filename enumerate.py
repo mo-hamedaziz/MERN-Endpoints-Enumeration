@@ -3,15 +3,34 @@ import re
 import argparse
 from tqdm import tqdm
 
-# Function to extract routes from a file
+# Function to extract routes from a JavaScript file
 def extract_routes_from_file(file_path):
+    routes = []
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            content = file.read()  # Read entire content of the file
+            # Regex to match Express route definitions globally
+            matches = re.finditer(r'\s*app\.(get|post|put|delete|patch)\s*\(\s*[\'"](/[\w/{}:-]*)[\'"]', content)
+            for match in matches:
+                method = match.group(1).upper()
+                route = match.group(2)
+                routes.append({
+                    'method': method,
+                    'route': route,
+                    'file': file_path,
+                    'line': match.start()  # Use match start position as line number approximation
+                })
+    except Exception as e:
+        print(f"Error reading file {file_path}: {e}")
+    return routes
+
     routes = []
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
             lines = file.readlines()
             for index, line in enumerate(lines, start=1):
                 # Regex to match Express route definitions
-                match = re.match(r'\s*app\.(get|post|put|delete|patch)\s*\(\s*\'(/[\w/{}:-]*)\'', line)
+                match = re.match(r'\s*app\.(get|post|put|delete|patch)\s*\(\s*[\'"](/[\w/{}:-]*)[\'"]', line)
                 if match:
                     method = match.group(1).upper()
                     route = match.group(2)
@@ -61,12 +80,15 @@ def is_mern_backend(directory):
     return False
 
 # Function to export routes to a file
-def export_routes_to_file(routes, file_name, base_directory):
+def export_routes_to_file(routes, file_name, base_directory, verbose=False):
     try:
         with open(file_name, 'w', encoding='utf-8') as file:
             for route in routes:
-                relative_path = os.path.relpath(route['file'], base_directory)
-                file.write(f"{route['method']} {route['route']} - Defined in {relative_path} at line {route['line']}\n")
+                if verbose:
+                    relative_path = os.path.relpath(route['file'], base_directory)
+                    file.write(f"{route['method']} {route['route']} - Defined in {relative_path} at line {route['line']}\n")
+                else:
+                    file.write(f"{route['method']} {route['route']}\n")
         print(f"You can find the results in {file_name}")
     except Exception as e:
         print(f"Error exporting routes to {file_name}: {e}")
@@ -110,7 +132,7 @@ def main():
 
     if sorted_routes:
         if args.export:
-            export_routes_to_file(sorted_routes, args.export, args.directory)
+            export_routes_to_file(sorted_routes, args.export, args.directory, args.verbose)
         else:
             print("\nFound the following routes:")
             for route in sorted_routes:
@@ -119,9 +141,11 @@ def main():
                     print(f"{route['method']} {route['route']} - Defined in {relative_path} at line {route['line']}")
                 else:
                     print(route['method'], route['route'])
+        
+        # Print the number of found routes
+        print(f"\nTotal number of endpoints found: {len(sorted_routes)}")
     else:
         print("No routes found.")
 
 if __name__ == '__main__':
     main()
-
